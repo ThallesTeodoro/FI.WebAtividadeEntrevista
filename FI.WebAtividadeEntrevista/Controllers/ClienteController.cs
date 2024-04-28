@@ -24,10 +24,7 @@ namespace WebAtividadeEntrevista.Controllers
         [HttpPost]
         public JsonResult Incluir(ClienteModel model)
         {
-            if (CpfIsInvalid(model.CPF))
-            {
-                ModelState.AddModelError("CPF", "CPF inválido.");
-            }
+            ValidateModel(model);
 
             if (!this.ModelState.IsValid)
             {
@@ -42,7 +39,7 @@ namespace WebAtividadeEntrevista.Controllers
             BoCliente bo = new BoCliente();
 
             model.Id = bo.Incluir(new Cliente()
-            {                    
+            {
                 CEP = model.CEP,
                 CPF = RemoveNotNumberChars(model.CPF),
                 Cidade = model.Cidade,
@@ -54,18 +51,26 @@ namespace WebAtividadeEntrevista.Controllers
                 Sobrenome = model.Sobrenome,
                 Telefone = model.Telefone
             });
-           
+
+            BoBeneficiario boBeneficiario = new BoBeneficiario();
+            foreach (var item in model.Beneficiarios)
+            {
+                boBeneficiario.Incluir(new Beneficiario()
+                {
+                    CPF = RemoveNotNumberChars(item.CPF),
+                    Nome = item.Nome,
+                    IdCliente = model.Id,
+                });
+            }
+
             return Json("Cadastro efetuado com sucesso");
         }
 
         [HttpPost]
         public JsonResult Alterar(ClienteModel model)
         {
-            if (CpfIsInvalid(model.CPF))
-            {
-                ModelState.AddModelError("CPF", "CPF inválido.");
-            }
-       
+            ValidateModel(model);
+
             if (!this.ModelState.IsValid)
             {
                 List<string> erros = (from item in ModelState.Values
@@ -92,7 +97,19 @@ namespace WebAtividadeEntrevista.Controllers
                 Sobrenome = model.Sobrenome,
                 Telefone = model.Telefone
             });
-                               
+
+            BoBeneficiario boBeneficiario = new BoBeneficiario();
+            boBeneficiario.ExcluirPeloIdCliente(model.Id);
+            foreach (var item in model.Beneficiarios)
+            {
+                boBeneficiario.Incluir(new Beneficiario()
+                {
+                    CPF = RemoveNotNumberChars(item.CPF),
+                    Nome = item.Nome,
+                    IdCliente = model.Id,
+                });
+            }
+
             return Json("Cadastro alterado com sucesso");
         }
 
@@ -100,7 +117,9 @@ namespace WebAtividadeEntrevista.Controllers
         public ActionResult Alterar(long id)
         {
             BoCliente bo = new BoCliente();
+            BoBeneficiario boBeneficiario = new BoBeneficiario();
             Cliente cliente = bo.Consultar(id);
+            List<Beneficiario> beneficiarios = boBeneficiario.Consultar(id);
             Models.ClienteModel model = null;
 
             if (cliente != null)
@@ -109,6 +128,7 @@ namespace WebAtividadeEntrevista.Controllers
                 {
                     Id = cliente.Id,
                     CEP = cliente.CEP,
+                    CPF = FormatCpf(cliente.CPF),
                     Cidade = cliente.Cidade,
                     Email = cliente.Email,
                     Estado = cliente.Estado,
@@ -116,7 +136,15 @@ namespace WebAtividadeEntrevista.Controllers
                     Nacionalidade = cliente.Nacionalidade,
                     Nome = cliente.Nome,
                     Sobrenome = cliente.Sobrenome,
-                    Telefone = cliente.Telefone
+                    Telefone = cliente.Telefone,
+                    Beneficiarios = beneficiarios
+                        .Select(b => new BeneficiarioModel()
+                        {
+                            Id = b.Id,
+                            CPF = b.CPF,
+                            Nome = b.Nome,
+                        })
+                        .ToList(),
                 };
             }
 
@@ -147,6 +175,41 @@ namespace WebAtividadeEntrevista.Controllers
             catch (Exception ex)
             {
                 return Json(new { Result = "ERROR", Message = ex.Message });
+            }
+        }
+
+        private void ValidateModel(ClienteModel model)
+        {
+            if (CpfIsInvalid(model.CPF))
+            {
+                ModelState.AddModelError("CPF", "O CPF é inválido.");
+            }
+
+            if (!CpfIsUnique(model.CPF, model.Id))
+            {
+                ModelState.AddModelError("CPF", "O CPF informado já foi cadastrado.");
+            }
+
+            if (model.Beneficiarios != null && model.Beneficiarios.Count > 0)
+            {
+                var cpfsBeneficiarios = model
+                    .Beneficiarios
+                    .Select(b => b.CPF)
+                    .Distinct()
+                    .ToList();
+
+                if (cpfsBeneficiarios.Count != model.Beneficiarios.Count)
+                {
+                    ModelState.AddModelError("Beneficiarios", "Há CPF(s) dos Beneficiários repetido(s).");
+                }
+
+                foreach (var item in model.Beneficiarios)
+                {
+                    if (CpfIsInvalid(item.CPF))
+                    {
+                        ModelState.AddModelError("CPFBeneficiario", $"O CPF {item.CPF} do beneficiário é inválido.");
+                    }
+                }
             }
         }
 
@@ -200,9 +263,36 @@ namespace WebAtividadeEntrevista.Controllers
             return false;
         }
 
+        private bool CpfIsUnique(string cpf, long? id)
+        {
+            BoCliente bo = new BoCliente();
+
+            if (id != null)
+            {
+                if (bo.VerificarExistenciaAlt(RemoveNotNumberChars(cpf), (long)id))
+                {
+                    return false;
+                }
+
+                return true;
+            }
+            
+            if (bo.VerificarExistencia(RemoveNotNumberChars(cpf)))
+            {
+                return false;
+            }
+            
+            return true;
+        }
+
         private string RemoveNotNumberChars(string str)
         {
             return new string(str.Where(char.IsDigit).ToArray());
+        }
+    
+        private string FormatCpf(string cpf)
+        {
+            return Convert.ToUInt64(cpf).ToString(@"000\.000\.000\-00");
         }
     }
 }

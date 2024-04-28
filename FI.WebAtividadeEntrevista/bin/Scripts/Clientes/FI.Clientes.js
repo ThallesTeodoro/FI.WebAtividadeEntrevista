@@ -15,7 +15,8 @@ $(document).ready(function () {
                 "Estado": $(this).find("#Estado").val(),
                 "Cidade": $(this).find("#Cidade").val(),
                 "Logradouro": $(this).find("#Logradouro").val(),
-                "Telefone": $(this).find("#Telefone").val()
+                "Telefone": $(this).find("#Telefone").val(),
+                "Beneficiarios": MapBeneficiarios(),
             },
             error:
             function (r) {
@@ -28,11 +29,27 @@ $(document).ready(function () {
             function (r) {
                 ModalDialog("Sucesso!", r)
                 $("#formCadastro")[0].reset();
+                $("#beneficiariosTable").empty();
             }
         });
     })
-    
 })
+
+function MapBeneficiarios() {
+    var data = [];
+    var name, cpf;
+    $("#beneficiariosTable tr").each(function (index) {
+        name = $(this).find('.nameBeneficiario').text();
+        cpf = $(this).find('.cpfBeneficiario').text();
+
+        data.push({
+            Nome: name,
+            CPF: cpf
+        });
+    });
+
+    return data;
+}
 
 function ModalDialog(titulo, texto) {
     var random = Math.random().toString().replace('.', '');

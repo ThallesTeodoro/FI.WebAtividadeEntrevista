@@ -11,6 +11,20 @@ $(document).ready(function () {
         $('#formCadastro #Cidade').val(obj.Cidade);
         $('#formCadastro #Logradouro').val(obj.Logradouro);
         $('#formCadastro #Telefone').val(obj.Telefone);
+
+        obj.Beneficiarios.forEach(function (element) {
+            var new_row = '\
+            <tr>\
+                <td class="cpfBeneficiario">' + element.CPF + '</td>\
+                <td class="nameBeneficiario">' + element.Nome + '</td>\
+                <td class="text-center">\
+                    <button type="button" title="Remover Beneficiário" class="btn btn-danger btn-sm remove-image">\
+                        Remover\
+                    </button>\
+                </td>\
+            </tr>';
+            $("#beneficiariosTable").append(new_row);
+        });
     }
 
     $('#formCadastro').submit(function (e) {
@@ -29,7 +43,8 @@ $(document).ready(function () {
                 "Estado": $(this).find("#Estado").val(),
                 "Cidade": $(this).find("#Cidade").val(),
                 "Logradouro": $(this).find("#Logradouro").val(),
-                "Telefone": $(this).find("#Telefone").val()
+                "Telefone": $(this).find("#Telefone").val(),
+                "Beneficiarios": MapBeneficiarios()
             },
             error:
             function (r) {
@@ -46,8 +61,23 @@ $(document).ready(function () {
             }
         });
     })
-    
 })
+
+function MapBeneficiarios() {
+    var data = [];
+    var name, cpf;
+    $("#beneficiariosTable tr").each(function (index) {
+        name = $(this).find('.nameBeneficiario').text();
+        cpf = $(this).find('.cpfBeneficiario').text();
+
+        data.push({
+            Nome: name,
+            CPF: cpf
+        });
+    });
+
+    return data;
+}
 
 function ModalDialog(titulo, texto) {
     var random = Math.random().toString().replace('.', '');

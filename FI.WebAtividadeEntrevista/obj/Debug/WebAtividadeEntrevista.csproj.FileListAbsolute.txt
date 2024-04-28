@@ -52,3 +52,4 @@ C:\Users\Thalles\Documents\desenvolvimento\FI.WebAtividadeEntrevista\FI.WebAtivi
 C:\Users\Thalles\Documents\desenvolvimento\FI.WebAtividadeEntrevista\FI.WebAtividadeEntrevista\bin\Scripts\Clientes\FI.AltClientes.js
 C:\Users\Thalles\Documents\desenvolvimento\FI.WebAtividadeEntrevista\FI.WebAtividadeEntrevista\bin\Scripts\Clientes\FI.ListClientes.js
 C:\Users\Thalles\Documents\desenvolvimento\FI.WebAtividadeEntrevista\FI.WebAtividadeEntrevista\bin\Scripts\Clientes\FI.Clientes.js
+C:\Users\Thalles\Documents\desenvolvimento\FI.WebAtividadeEntrevista\FI.WebAtividadeEntrevista\bin\Scripts\Clientes\FI.Beneficiario.js
